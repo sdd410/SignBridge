@@ -89,7 +89,25 @@ cd ..
 
 ## Running the Application
 
-### Option A: Run Services Locally (Recommended for Development)
+### Option A: One-Command Start (Recommended)
+
+You can launch both the backend API and frontend dashboard concurrently with a single command:
+
+```bash
+# Using the Bash script:
+./start.sh
+
+# Or using the Python runner (cross-platform):
+python3 run.py
+```
+
+Both options start:
+- **Backend API**: `http://localhost:8000` (API documentation at `http://localhost:8000/docs`)
+- **Frontend Dashboard**: `http://localhost:5173`
+
+Press `Ctrl+C` to cleanly stop both services at once.
+
+### Option B: Run Services Separately (Development)
 
 **Terminal 1 — Backend:**
 ```bash
