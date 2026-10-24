@@ -23,7 +23,8 @@ class PredictionResponse(BaseModel):
     timestamp: float
     accepted_char: Optional[str] = None
     transcript: str = ""
-    roi_bbox: Optional[List[int]] = None  # [x, y, w, h]
+    roi_bbox: Optional[List[int]] = None  # [x, y, w, h] pixel coords
+    norm_roi_bbox: Optional[List[float]] = None  # [nx, ny, nw, nh] normalized coords [0.0 - 1.0]
 
 
 class ModelStatusResponse(BaseModel):

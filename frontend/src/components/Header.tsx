@@ -1,5 +1,5 @@
 import React from 'react';
-import { Activity, Cpu, HelpCircle, Settings as SettingsIcon, BarChart2 } from 'lucide-react';
+import { Activity, Cpu, HelpCircle, Settings as SettingsIcon, BarChart2, Database } from 'lucide-react';
 import { ModelStatus } from '../types';
 import { ConnectionStatus } from '../services/websocket';
 
@@ -12,6 +12,7 @@ interface HeaderProps {
   onOpenSettings: () => void;
   onOpenMetrics: () => void;
   onOpenGuide: () => void;
+  onOpenStudio: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -23,6 +24,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenSettings,
   onOpenMetrics,
   onOpenGuide,
+  onOpenStudio,
 }) => {
   const isModelReady = modelStatus?.status === 'LOADED';
 
@@ -84,6 +86,15 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Action Modals */}
           <div className="flex items-center gap-1.5 ml-auto md:ml-2">
+            <button
+              onClick={onOpenStudio}
+              className="px-2.5 py-1.5 rounded-md bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-500/40 hover:border-emerald-500/70 transition-all flex items-center gap-1.5 shadow-sm"
+              title="Record Your Hand Images & Custom Dataset Studio"
+            >
+              <Database className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Dataset Studio</span>
+            </button>
+
             <button
               onClick={onOpenGuide}
               className="px-2.5 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 hover:border-slate-600 transition-all flex items-center gap-1.5"

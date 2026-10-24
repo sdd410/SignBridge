@@ -39,7 +39,7 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
 }) => {
   const canvasOverlayRef = useRef<HTMLCanvasElement | null>(null);
 
-  // Render on-screen ROI guide and bounding box
+  // Render on-screen ROI guide and bounding box with pixel-perfect resolution scaling
   useEffect(() => {
     const canvas = canvasOverlayRef.current;
     const video = videoRef.current;
@@ -59,25 +59,45 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Draw ROI bounding box if available from backend prediction
-        if (prediction?.roi_bbox && isStreaming && !isPaused) {
-          const [rx, ry, rw, rh] = prediction.roi_bbox;
-          
-          // Calculate display coordinates (taking mirror mode into account)
+        if (isStreaming && !isPaused) {
+          // Use normalized ROI coordinates (0.0 to 1.0) for accurate canvas scaling
+          const normBox = prediction?.norm_roi_bbox || [0.22, 0.16, 0.56, 0.56];
+          const [nx, ny, nw, nh] = normBox;
+
+          const rw = Math.round(nw * canvas.width);
+          const rh = Math.round(nh * canvas.height);
+          let rx = Math.round(nx * canvas.width);
+          const ry = Math.round(ny * canvas.height);
+
+          // Adjust horizontal coordinate if preview is mirrored
           const displayX = isMirrored ? canvas.width - (rx + rw) : rx;
 
           ctx.save();
-          // Glow effect
-          ctx.strokeStyle = prediction.is_accepted ? '#10b981' : prediction.is_stable ? '#06b6d4' : '#64748b';
+
+          // Outer semi-transparent vignette/dimming outside the detection box
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+          // Top
+          ctx.fillRect(0, 0, canvas.width, ry);
+          // Bottom
+          ctx.fillRect(0, ry + rh, canvas.width, canvas.height - (ry + rh));
+          // Left
+          ctx.fillRect(0, ry, displayX, rh);
+          // Right
+          ctx.fillRect(displayX + rw, ry, canvas.width - (displayX + rw), rh);
+
+          // Box outline
+          const isAccepted = prediction?.is_accepted;
+          const isStable = prediction?.is_stable;
+          ctx.strokeStyle = isAccepted ? '#10b981' : isStable ? '#06b6d4' : 'rgba(56, 189, 248, 0.7)';
           ctx.lineWidth = 2.5;
           ctx.setLineDash([8, 6]);
           ctx.strokeRect(displayX, ry, rw, rh);
 
-          // Corner brackets
-          const cornerLen = 16;
+          // Corner accent brackets
+          const cornerLen = Math.max(16, Math.floor(rw * 0.1));
           ctx.setLineDash([]);
           ctx.lineWidth = 4;
-          ctx.strokeStyle = prediction.is_accepted ? '#10b981' : '#06b6d4';
+          ctx.strokeStyle = isAccepted ? '#10b981' : isStable ? '#06b6d4' : '#38bdf8';
 
           // Top-left
           ctx.beginPath();
@@ -107,29 +127,16 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
           ctx.lineTo(displayX + rw, ry + rh - cornerLen);
           ctx.stroke();
 
-          // Label above box
-          ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
-          ctx.fillRect(displayX, Math.max(0, ry - 24), 140, 22);
-          ctx.fillStyle = '#38bdf8';
-          ctx.font = 'bold 11px system-ui, sans-serif';
-          ctx.fillText(`Hand ROI • ${(prediction.confidence * 100).toFixed(0)}%`, displayX + 6, Math.max(14, ry - 8));
+          // Detection badge tag
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+          const badgeText = prediction?.confidence
+            ? `Hand Detection Area • ${(prediction.confidence * 100).toFixed(0)}%`
+            : 'Hand Detection Area';
+          ctx.fillRect(displayX, Math.max(0, ry - 26), 195, 24);
+          ctx.fillStyle = isAccepted ? '#34d399' : isStable ? '#38bdf8' : '#94a3b8';
+          ctx.font = 'bold 12px system-ui, -apple-system, sans-serif';
+          ctx.fillText(badgeText, displayX + 8, Math.max(16, ry - 9));
 
-          ctx.restore();
-        } else if (isStreaming && !isPaused) {
-          // Default standby guide box
-          const boxSize = Math.floor(Math.min(canvas.width, canvas.height) * 0.58);
-          const gx = Math.floor((canvas.width - boxSize) / 2);
-          const gy = Math.max(10, Math.floor(canvas.height * 0.18));
-
-          ctx.save();
-          ctx.strokeStyle = 'rgba(6, 182, 212, 0.4)';
-          ctx.lineWidth = 2;
-          ctx.setLineDash([6, 6]);
-          ctx.strokeRect(gx, gy, boxSize, boxSize);
-
-          ctx.fillStyle = 'rgba(6, 182, 212, 0.6)';
-          ctx.font = '11px system-ui, sans-serif';
-          ctx.fillText('Place hand in frame', gx + 10, gy + 20);
           ctx.restore();
         }
       }
@@ -212,7 +219,7 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
             </div>
             <p className="text-sm font-medium text-slate-300 mb-1">Camera Feed Stopped</p>
             <p className="text-xs text-slate-500 max-w-xs mb-4">
-              Click &quot;Start Camera&quot; to begin capturing hand gestures in real time.
+              Click &quot;Start Camera&quot; and position your hand inside the highlighted green/cyan guide box.
             </p>
             <button
               onClick={onStart}

@@ -6,6 +6,7 @@ import { TranscriptPanel } from './components/TranscriptPanel';
 import { SettingsModal } from './components/SettingsModal';
 import { ModelMetricsModal } from './components/ModelMetricsModal';
 import { SignsGuideModal } from './components/SignsGuideModal';
+import { DatasetStudioModal } from './components/DatasetStudioModal';
 import { useCamera } from './hooks/useCamera';
 import { SignBridgeWebSocket, ConnectionStatus } from './services/websocket';
 import {
@@ -43,6 +44,7 @@ export const App: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isMetricsOpen, setIsMetricsOpen] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
+  const [isStudioOpen, setIsStudioOpen] = useState(false);
 
   // Camera hook
   const {
@@ -221,6 +223,7 @@ export const App: React.FC = () => {
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenMetrics={() => setIsMetricsOpen(true)}
         onOpenGuide={() => setIsGuideOpen(true)}
+        onOpenStudio={() => setIsStudioOpen(true)}
       />
 
       {/* Main Dashboard Layout */}
@@ -294,6 +297,14 @@ export const App: React.FC = () => {
       <SignsGuideModal
         isOpen={isGuideOpen}
         onClose={() => setIsGuideOpen(false)}
+      />
+
+      <DatasetStudioModal
+        isOpen={isStudioOpen}
+        onClose={() => setIsStudioOpen(false)}
+        captureFrame={captureFrame}
+        isStreaming={isStreaming}
+        onStartCamera={startCamera}
       />
     </div>
   );

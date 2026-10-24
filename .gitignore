@@ -41,7 +41,6 @@ yarn-debug.log*
 yarn-error.log*
 
 # Datasets & Weights (large raw files)
-ml/dataset/raw/
 *.tar.gz
 *.zip
 

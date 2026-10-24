@@ -150,7 +150,8 @@ def predict_frame(payload: Dict[str, Any] = Body(...)):
         raise HTTPException(status_code=400, detail=f"Image decoding failed: {e}")
 
     # 1. Extract Hand ROI
-    roi_image, bbox = hand_detector.get_roi(frame)
+    client_roi = payload.get("roi")
+    roi_image, bbox, norm_bbox = hand_detector.get_roi(frame, client_norm_roi=client_roi)
 
     # 2. Run CNN inference
     pred_res = predictor.predict(roi_image)
@@ -181,7 +182,8 @@ def predict_frame(payload: Dict[str, Any] = Body(...)):
         timestamp=pred_res["timestamp"],
         accepted_char=stab_res["accepted_char"],
         transcript=t_state["text"],
-        roi_bbox=list(bbox)
+        roi_bbox=list(bbox),
+        norm_roi_bbox=list(norm_bbox)
     )
 
     recent_predictions.append(result.model_dump())
@@ -198,6 +200,90 @@ def get_recent_predictions(limit: int = 20):
 
 
 @router.get("/transcripts", response_model=TranscriptResponse)
+def get_transcript():
+    """Get active transcript text and word count."""
+    return transcript_manager.get_state()
+
+
+@router.get("/dataset/summary")
+def get_dataset_summary():
+    """Return counts of available training images per class."""
+    custom_dir = settings.weights_dir.parent / "dataset" / "custom"
+    real_raw_dir = settings.weights_dir.parent / "dataset" / "real_raw"
+    split_train_dir = settings.weights_dir.parent / "dataset" / "split" / "train"
+
+    summary: Dict[str, Dict[str, int]] = {}
+    
+    if split_train_dir.exists():
+        for d in sorted(split_train_dir.iterdir()):
+            if d.is_dir() and not d.name.startswith("."):
+                count = len(list(d.glob("*.jpg")) + list(d.glob("*.png")))
+                summary[d.name] = {"train_samples": count, "custom_samples": 0}
+
+    if custom_dir.exists():
+        for d in sorted(custom_dir.iterdir()):
+            if d.is_dir() and not d.name.startswith("."):
+                count = len(list(d.glob("*.jpg")) + list(d.glob("*.png")))
+                if d.name in summary:
+                    summary[d.name]["custom_samples"] = count
+                else:
+                    summary[d.name] = {"train_samples": 0, "custom_samples": count}
+
+    total_samples = sum(item["train_samples"] + item["custom_samples"] for item in summary.values())
+    return {
+        "classes": sorted(list(summary.keys())),
+        "total_classes": len(summary),
+        "total_samples": total_samples,
+        "class_breakdown": summary,
+        "custom_dir": str(custom_dir),
+    }
+
+
+@router.post("/dataset/capture")
+def capture_dataset_sample(payload: Dict[str, Any] = Body(...)):
+    """Save a real webcam frame into the custom dataset directory for training."""
+    label = payload.get("label", "").strip().upper()
+    image_b64 = payload.get("image")
+    if not label or not image_b64:
+        raise HTTPException(status_code=400, detail="Missing 'label' or 'image' parameter.")
+
+    try:
+        frame = decode_image(image_b64)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Image decoding failed: {e}")
+
+    # Extract ROI or use full frame
+    client_roi = payload.get("roi")
+    roi_image, _, _ = hand_detector.get_roi(frame, client_norm_roi=client_roi)
+
+    custom_dir = settings.weights_dir.parent / "dataset" / "custom" / label
+    custom_dir.mkdir(parents=True, exist_ok=True)
+
+    filename = f"hand_{int(time.time() * 1000)}.jpg"
+    filepath = custom_dir / filename
+    cv2.imwrite(str(filepath), roi_image)
+
+    count = len(list(custom_dir.glob("*.jpg")))
+    return {"status": "saved", "label": label, "filename": filename, "class_total": count}
+
+
+@router.post("/dataset/train")
+def trigger_training():
+    """Trigger background retraining on real and custom hand datasets."""
+    import subprocess
+    cmd = [
+        str(settings.weights_dir.parent.parent / ".venv" / "bin" / "python"),
+        "ml/scripts/prepare_real_dataset.py",
+        "--max-per-class", "350"
+    ]
+    try:
+        subprocess.run(cmd, check=True)
+        # Reload model into singleton
+        model_loader.load()
+        return {"status": "success", "message": "Model reloaded with updated real-hand weights"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Retraining failed: {e}")
+
 def get_transcript():
     """Get active transcript text and word count."""
     return transcript_manager.get_state()

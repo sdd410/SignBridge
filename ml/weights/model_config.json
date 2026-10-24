@@ -1,6 +1,6 @@
 {
   "model_type": "SignCNN",
-  "num_classes": 29,
+  "num_classes": 24,
   "class_names": [
     "A",
     "B",
@@ -11,7 +11,6 @@
     "G",
     "H",
     "I",
-    "J",
     "K",
     "L",
     "M",
@@ -26,11 +25,7 @@
     "V",
     "W",
     "X",
-    "Y",
-    "Z",
-    "del",
-    "nothing",
-    "space"
+    "Y"
   ],
   "img_size": 64,
   "in_channels": 3,
@@ -46,9 +41,9 @@
       0.225
     ]
   },
-  "best_val_acc": 0.6091954022988506,
+  "best_val_acc": 0.999198717948718,
   "epochs_trained": 10,
-  "total_training_time_sec": 279.3431317806244,
-  "parameter_count": 1475133,
-  "created_at": "2026-10-24T20:34:14Z"
+  "total_training_time_sec": 338.56629705429077,
+  "parameter_count": 1474488,
+  "created_at": "2026-10-24T23:07:14Z"
 }

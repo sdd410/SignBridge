@@ -24,6 +24,7 @@ export interface PredictionEvent {
   accepted_char: string | null;
   transcript: string;
   roi_bbox?: [number, number, number, number];
+  norm_roi_bbox?: [number, number, number, number];
 }
 
 export interface ModelStatus {

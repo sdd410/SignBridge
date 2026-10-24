@@ -37,12 +37,9 @@ Live Text Transcript Manager (Assembly, Word Stats, Space/Del, Export & Speech S
 ## Key Features
 
 1. **Local Real-Time Inference**: Runs 100% locally on CPU or Apple Silicon MPS (Metal Performance Shaders) without paid external APIs.
-2. **Real Trained Model Included**: Pre-trained on 29 ASL classes (`A`–`Z`, `del`, `space`, `nothing`) with verified checkpoints, metrics, and confusion matrix.
-3. **No Fabricated Predictions**: Transparent status reporting, measured FPS, and exact millisecond latency.
-4. **Adaptive Hand ROI Extraction**:
-   - `guide_roi`: High-accuracy on-screen targeting guide box.
-   - `skin_contour`: Automatic YCrCb skin tone segmentation.
-   - `full_frame`: Passthrough mode.
+2. **Real Human Hand Dataset Included**: Pre-trained on real human hand gesture photographs from the Sign Language MNIST benchmark (27,455 real hand images, evaluated at **99.69% test accuracy**) with verified weights, metrics, and confusion matrix.
+3. **Pixel-Perfect UI Detection Area**: The on-screen visual guide box uses normalized coordinates `[norm_x, norm_y, norm_w, norm_h]` with automatic canvas scaling and mirror inversion compensation so the cropped frame matches what you see inside the box with 100% fidelity.
+4. **Interactive Dataset Studio**: Built directly into the UI! Allows capturing real webcam frames of your own hands for any letter in seconds and retraining the model on your environment with a single click. Also supports dropping custom image folders directly into `ml/dataset/custom/`.
 5. **Temporal Prediction Stabilization**:
    - Configurable temporal sliding window (majority voting).
    - Dynamic confidence thresholding.

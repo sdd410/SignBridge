@@ -65,11 +65,13 @@ def test_preprocess_for_model():
 def test_hand_detector_guide_roi():
     detector = HandDetector(mode="guide_roi")
     frame = np.zeros((480, 640, 3), dtype=np.uint8)
-    cropped, bbox = detector.get_roi(frame)
+    cropped, bbox, norm_bbox = detector.get_roi(frame)
 
     assert len(bbox) == 4
+    assert len(norm_bbox) == 4
     x, y, w, h = bbox
     assert w == h
     assert cropped.shape[0] == h
     assert cropped.shape[1] == w
     assert x >= 0 and y >= 0
+    assert 0.0 <= norm_bbox[0] <= 1.0

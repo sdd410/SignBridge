@@ -111,7 +111,8 @@ async def websocket_predict_endpoint(websocket: WebSocket):
                 fps_counter = 0.85 * fps_counter + 0.15 * current_fps  # Exponential smoothing
 
             # 1. Extract Hand ROI
-            roi_image, bbox = hand_detector.get_roi(frame)
+            client_roi = data.get("roi") if isinstance(data, dict) else None
+            roi_image, bbox, norm_bbox = hand_detector.get_roi(frame, client_norm_roi=client_roi)
 
             # 2. Run CNN Inference
             pred_res = predictor.predict(roi_image)
@@ -147,6 +148,7 @@ async def websocket_predict_endpoint(websocket: WebSocket):
                 "accepted_char": accepted_char,
                 "transcript": current_transcript["text"],
                 "roi_bbox": list(bbox),
+                "norm_roi_bbox": list(norm_bbox),
             }
 
             await websocket.send_json(response)
