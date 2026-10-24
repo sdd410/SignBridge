@@ -1,3 +1,4 @@
+
 # SignBridge Architectural Decision & Verification Record
 
 ## 1. Architectural Overview
